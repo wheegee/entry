@@ -1,2 +1,2 @@
 #!/bin/bash
-entry $PARTITION -- $@
+entry "$PARTITION" -- "$@"
