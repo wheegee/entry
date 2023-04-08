@@ -52,7 +52,7 @@ fn ssm_client(conf: &SdkConfig, endpoint: &Option<String>) -> Client {
 /// Return parameters as `HashMap`.
 async fn fetch_parameters(
     client: &Client,
-    paths: &String,
+    paths: &str,
 ) -> Result<HashMap<String, String>, Box<dyn Error>> {
     let mut parameters = HashMap::new();
 
@@ -66,7 +66,7 @@ async fn fetch_parameters(
         .await?;
 
     for parameter in resp.parameters.unwrap().iter() {
-        let store = match serde_json::from_str(&parameter.value().unwrap().to_string()) {
+        let store = match serde_json::from_str(parameter.value().unwrap()) {
             Ok(Value::Object(store)) => store,
             _ => panic!("error: invalid JSON in parameter `{}`", parameter.name().unwrap()),
         };
@@ -116,7 +116,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Verbose output
     if verbose {
         println!("Region: {}", client.conf().region().unwrap());
-        println!("Endpoint: {}", endpoint.unwrap_or("AWS SSM default".to_string()));
+        println!("Endpoint: {}", endpoint.unwrap_or_else(|| "AWS SSM default".to_string()));
     }
 
     let parameters = match fetch_parameters(&client, &paths).await {

@@ -138,8 +138,8 @@ jobs:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
           type=raw,value=${{ steps.context.outputs.tag }}
-        flavor: |
-          latest=true
+        # flavor: |
+        #   latest=true
     
     - name: Build and push image
       uses: docker/build-push-action@v2
