@@ -4,6 +4,7 @@ use aws_config::SdkConfig;
 use aws_config::meta::region::RegionProviderChain;
 use aws_sdk_ssm::{Client, Region};
 use clap::Parser;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::error::Error;
 use std::process::{Command, ExitStatus};
@@ -24,8 +25,8 @@ struct Options {
     #[clap(short, long, env = "AWS_REGION")]
     region: Option<String>,
 
-    /// SSM prefix to filter
-    prefix: String,
+    /// SSM paths to source
+    paths: String,
 
     /// Command to execute
     command: Vec<String>,
@@ -46,27 +47,33 @@ fn ssm_client(conf: &SdkConfig, endpoint: &Option<String>) -> Client {
     aws_sdk_ssm::Client::from_conf(ssm_config_builder.build())
 }
 
-/// Fetch parameters in given SSM prefix.
+/// Fetch JSON encoded parameters in given SSM paths.
 ///
 /// Return parameters as `HashMap`.
 async fn fetch_parameters(
     client: &Client,
-    prefix: &str,
+    paths: &str,
 ) -> Result<HashMap<String, String>, Box<dyn Error>> {
     let mut parameters = HashMap::new();
 
+    let paths: Vec<String> = paths.split(',').map(|path| path.to_string()).collect();
+
     let resp = client
-        .get_parameters_by_path()
-        .path(prefix)
+        .get_parameters()
+        .set_names(Some(paths))
         .with_decryption(true)
         .send()
         .await?;
 
     for parameter in resp.parameters.unwrap().iter() {
-        parameters.insert(
-            parameter.name().unwrap().to_string().replace(prefix, ""),
-            parameter.value().unwrap().to_string(),
-        );
+        let store = match serde_json::from_str(parameter.value().unwrap()) {
+            Ok(Value::Object(store)) => store,
+            _ => panic!("error: invalid JSON in parameter `{}`", parameter.name().unwrap()),
+        };
+
+        for (key, value) in store {
+            parameters.insert(key, value.to_string());
+        }
     }
 
     Ok(parameters)
@@ -92,7 +99,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         verbose,
         endpoint,
         region,
-        prefix,
+        paths,
         command,
     } = Options::parse();
 
@@ -109,14 +116,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Verbose output
     if verbose {
         println!("Region: {}", client.conf().region().unwrap());
-        println!("Endpoint: {}", endpoint.unwrap_or("AWS SSM default".to_string()));
+        println!("Endpoint: {}", endpoint.unwrap_or_else(|| "AWS SSM default".to_string()));
     }
 
-    let parameters = match fetch_parameters(&client, &prefix).await {
+    let parameters = match fetch_parameters(&client, &paths).await {
         Ok(parameters) => parameters,
         Err(error) => panic!(
             "error: failed to retrieve parameters under `{}`: {:?}",
-            &prefix, error
+            &paths, error
         ),
     };
 
