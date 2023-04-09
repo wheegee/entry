@@ -1,15 +1,15 @@
 [package]
 name = "sentential"
-version = "0.4.0"
+version = "0.4.1"
 description = "An execution wrapper for sententially-driven Lambdas"
 authors = [
   "Raymond Douglas <r@rymnd.org>",
   "Brendan Keane <btkeane@gmail.com>"
 ]
 license-file = "LICENSE"
-documentation = "https://github.com/wheegee/sentential-entry"
-homepage = "https://github.com/wheegee/sentential-entry"
-repository = "https://github.com/wheegee/sentential-entry"
+documentation = "https://github.com/wheegee/entry"
+homepage = "https://github.com/wheegee/entry"
+repository = "https://github.com/wheegee/entry"
 edition = "2021"
 
 [[bin]]
