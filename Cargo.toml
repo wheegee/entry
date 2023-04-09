@@ -7,9 +7,9 @@ authors = [
   "Brendan Keane <btkeane@gmail.com>"
 ]
 license-file = "LICENSE"
-documentation = "https://github.com/wheegee/sentential-entry"
-homepage = "https://github.com/wheegee/sentential-entry"
-repository = "https://github.com/wheegee/sentential-entry"
+documentation = "https://github.com/wheegee/entry"
+homepage = "https://github.com/wheegee/entry"
+repository = "https://github.com/wheegee/entry"
 edition = "2021"
 
 [[bin]]
