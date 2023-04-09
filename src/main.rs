@@ -72,7 +72,7 @@ async fn fetch_parameters(
         };
 
         for (key, value) in store {
-            parameters.insert(key, value.to_string());
+            parameters.insert(key, value.as_str().unwrap().to_string());
         }
     }
 
