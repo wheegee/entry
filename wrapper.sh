@@ -1,2 +1,2 @@
-#!/bin/bash
-entry "$PARTITION" -- "$@"
+#!/usr/bin/env bash
+entry "$SSM_PATHS" -- "$@"
