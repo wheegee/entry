@@ -1,19 +1,57 @@
-# sentential-entry
+# entry
 
-[![crates.io](https://img.shields.io/crates/v/sentential.svg)](https://crates.io/crates/sentential)
+[![Main](https://github.com/raylas/nextdns-exporter/actions/workflows/main.yaml/badge.svg)](https://github.com/raylas/nextdns-exporter/actions/workflows/main.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/raylas/nextdns-exporter)](https://goreportcard.com/report/github.com/raylas/nextdns-exporter)
 
-sentential-entry is an execution wrapper for [sententially-driven](https://github.com/wheegee/sentential) Lambdas on AWS.
+A package and execution wrapper for AWS SSM and Secrets Manager expansion.
 
-## Install
+## Usage
 
-With crates.io:
+### CLI
+
 ```bash
-cargo install sentential
+Usage: entry [-g] [-p PREFIX] [COMMAND [ARGUMENTS [ARGUMENTS ...]]]
+
+Positional arguments:
+  COMMAND                Command to run
+  ARGUMENTS              Command arguments
+
+Options:
+  -g                     Do not inherit environment
+  -p PREFIX              SSM prefixes to source
+  --help, -h             display this help and exit
 ```
 
-From source:
-```bash
-cargo install --path /path/to/sentential-entry/repo
+### Package
+
+```json
+{
+  "foo": "oof",
+  "bar": "rab"
+}
 ```
 
-Or, download and run the binary from [the latest release](https://github.com/wheegee/sentential-entry/releases).
+```go
+var data struct {
+  Foo string `json:"foo"`
+  Bar string `json:"bar"`
+}
+
+awsConfig, err := config.LoadDefaultConfig(context.TODO())
+if err != nil {
+  panic("error loading AWS credentials")
+}
+
+p := &kv.Parameters{Client: ssm.NewFromConfig(awsConfig)}
+
+// Get
+params, err := p.Get([]string{"/dev/foobar"})
+if err != nil {
+  panic("error getting parameter")
+}
+
+// Unmarshal
+if err := p.Unmarshal("/dev/foobar", &data); err != nil {
+  panic("error unmarshalling parameter")
+}
+```
