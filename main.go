@@ -1,13 +1,8 @@
 package main
 
 import (
-	"context"
-
 	"github.com/alexflint/go-arg"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/linecard/entry/pkg/env"
-	"github.com/linecard/entry/pkg/kv"
 )
 
 type args struct {
@@ -34,22 +29,5 @@ func main() {
 
 	if err := e.Execute(); err != nil {
 		panic(err)
-	}
-}
-
-func testUnmarshal() {
-	var data struct {
-		Foo string `json:"foo"`
-		Bar string `json:"bar"`
-	}
-
-	awsConfig, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		panic("error loading AWS credentials")
-	}
-
-	p := &kv.Parameters{Client: ssm.NewFromConfig(awsConfig)}
-	if err := p.Unmarshal("/dev/foobar", &data); err != nil {
-		panic("error unmarshalling parameter")
 	}
 }
