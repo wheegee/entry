@@ -2,169 +2,51 @@ name: Main
 
 on:
   pull_request:
-    branches:
-    - main  
   push:
     branches:
     - main
     tags:
-    - "*.*.*"
+    - "*"
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: wheegee/entry
+  IMAGE_NAME: ${{ github.repository }}
+  GO_VERSION: ^1.21.4
 
 jobs:
-  lint:
-    name: Lint
+  test:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: Set up Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
-    
-    - name: Lint
-      uses: actions-rs/clippy-check@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        args: --all-features
-
-    - name: Audit
-      uses: actions-rs/audit-check@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-
-  # test:
-  #   name: Test
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v3
-
-  #   - name: Set up Rust
-  #     uses: actions-rs/toolchain@v1
-  #     with:
-  #       profile: minimal
-  #       toolchain: stable
-    
-  #   - name: Test
-  #     uses: actions-rs/cargo@v1
-  #     with:
-  #       command: test
-
-  build:
-    name: Release
-    needs:
-    - lint
-    # - test
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    strategy: 
-      matrix:
-        include:
-        - target: x86_64-unknown-linux-musl
-          arch: amd64
-        - target: aarch64-unknown-linux-musl
-          arch: arm64
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: Set up Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
-        override: true
-        target: ${{ matrix.target }}
-
-    - name: Build
-      uses: actions-rs/cargo@v1
-      with:
-        command: build
-        args: --release --target ${{ matrix.target }}
-        use-cross: true
-
-    - name: Package
-      run: |
-        cd target/${{ matrix.target }}/release          
-        mv entry ../../../entry-${{ matrix.arch }}
-        cd -
-
-    - name: Create release
-      id: release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: entry*
-
-  registry:
-    name: Registry
-    needs:
-    - build
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - name: Configure environment
-      id: context
-      run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
-
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v2
-      
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Log in to registry
-      run: |
-        docker login \
-          -u ${{ github.actor }} \
-          -p ${{ secrets.GITHUB_TOKEN }} \
-          ${{ env.REGISTRY }}
-
-    - name: Set image metadata
-      id: meta
-      uses: docker/metadata-action@v3
+    - uses: actions/setup-go@v4
       with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-        tags: |
-          type=raw,value=${{ steps.context.outputs.tag }}
-        # flavor: |
-        #   latest=true
-    
-    - name: Build and push image
-      uses: docker/build-push-action@v2
-      with:
-        context: .
-        platforms: linux/amd64,linux/arm64
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+        go-version: ${{ env.GO_VERSION }}
 
-  publish:
-    name: Publish
-    needs: build
+    - run: go test -v ./...
+
+  release:
     if: startsWith(github.ref, 'refs/tags/')
+    needs: test
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: Set up Rust
-      uses: actions-rs/toolchain@v1
+    - uses: actions/checkout@v4
       with:
-        profile: minimal
-        toolchain: stable
-          
-    - name: Publish
-      continue-on-error: true
-      run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        fetch-depth: 0
+
+    - uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+      id: context
+
+    - uses: goreleaser/goreleaser-action@v5
+      with:
+        distribution: goreleaser
+        version: latest
+        args: release --rm-dist
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
