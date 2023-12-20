@@ -3,13 +3,25 @@ package kv
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 )
 
+type SSMClient interface {
+	GetParameters(ctx context.Context, params *ssm.GetParametersInput, optFns ...func(*ssm.Options)) (*ssm.GetParametersOutput, error)
+	GetParameter(ctx context.Context, params *ssm.GetParameterInput, optFns ...func(*ssm.Options)) (*ssm.GetParameterOutput, error)
+}
+
 type Parameters struct {
-	Client *ssm.Client
+	Client SSMClient
+}
+
+func NewClient(client SSMClient) *Parameters {
+	return &Parameters{
+		Client: client,
+	}
 }
 
 func (p *Parameters) Get(prefixes []string) (*KV, error) {
@@ -21,7 +33,7 @@ func (p *Parameters) Get(prefixes []string) (*KV, error) {
 
 	results, err := p.Client.GetParameters(context.TODO(), input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error retrieving parameters: %w", err)
 	}
 
 	kv := make(map[string]any)
@@ -29,7 +41,7 @@ func (p *Parameters) Get(prefixes []string) (*KV, error) {
 		if json.Valid([]byte(*result.Value)) {
 			var v map[string]any
 			if err := json.Unmarshal([]byte(*result.Value), &v); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error unmarshalling parameter: %w", err)
 			}
 
 			for k, v := range v {
@@ -56,11 +68,11 @@ func (p *Parameters) Unmarshal(prefix string, v any) error {
 
 	result, err := p.Client.GetParameter(context.TODO(), input)
 	if err != nil {
-		return err
+		return fmt.Errorf("error retrieving parameter: %w", err)
 	}
 
 	if err := json.Unmarshal([]byte(*result.Parameter.Value), &v); err != nil {
-		return err
+		return fmt.Errorf("error unmarshalling parameter: %w", err)
 	}
 
 	return nil

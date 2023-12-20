@@ -1,12 +1,9 @@
 package env
 
 import (
-	"context"
 	"os"
 	"os/exec"
 
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/linecard/entry/pkg/kv"
 )
 
@@ -18,15 +15,10 @@ type Env struct {
 	Pristine   bool
 }
 
-func Configure(command string, arguments ...string) Env {
-	awsConfig, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		panic("error loading AWS credentials")
-	}
-
+func Configure(client kv.SSMClient, command string, arguments ...string) Env {
 	return Env{
 		Parameters: &kv.Parameters{
-			Client: ssm.NewFromConfig(awsConfig),
+			Client: client,
 		},
 		Command:   command,
 		Arguments: arguments,

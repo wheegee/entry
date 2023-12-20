@@ -3,14 +3,14 @@
 [![Main](https://github.com/raylas/nextdns-exporter/actions/workflows/main.yaml/badge.svg)](https://github.com/raylas/nextdns-exporter/actions/workflows/main.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/raylas/nextdns-exporter)](https://goreportcard.com/report/github.com/raylas/nextdns-exporter)
 
-A package and execution wrapper for AWS SSM and Secrets Manager expansion.
+A package and execution wrapper for AWS SSM Parameter expansion.
 
 ## Usage
 
 ### CLI
 
 ```bash
-Usage: entry [-g] [-p PREFIX] [COMMAND [ARGUMENTS [ARGUMENTS ...]]]
+Usage: main [-g] [-p PREFIX] [COMMAND [ARGUMENTS [ARGUMENTS ...]]]
 
 Positional arguments:
   COMMAND                Command to run
@@ -20,6 +20,7 @@ Options:
   -g                     Do not inherit environment
   -p PREFIX              SSM prefixes to source
   --help, -h             display this help and exit
+  --version              display version and exit
 ```
 
 ### Package
