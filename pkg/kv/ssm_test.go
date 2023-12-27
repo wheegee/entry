@@ -14,7 +14,7 @@ import (
 
 func TestGet(t *testing.T) {
 	var (
-		prefixes = []string{"/user-api/postgres", "/admin-api/redis"}
+		prefixes = []string{"/user-api"}
 		kv       = KV{
 			Map: map[string]any{
 				"postgres_user": "user-api",
@@ -29,7 +29,7 @@ func TestGet(t *testing.T) {
 				"redis_port=6379",
 			},
 		}
-		ssmParameters = ssm.GetParametersOutput{
+		ssmParameters = ssm.GetParametersByPathOutput{
 			Parameters: []types.Parameter{
 				{
 					Name:  aws.String("/user-api/postgres"),
@@ -46,7 +46,7 @@ func TestGet(t *testing.T) {
 		name          string
 		prefixes      []string
 		kv            KV
-		ssmParameters ssm.GetParametersOutput
+		ssmParameters ssm.GetParametersByPathOutput
 		awsError      error
 		expectedError error
 	}{
@@ -62,16 +62,16 @@ func TestGet(t *testing.T) {
 			name:          "error retrieving parameters",
 			prefixes:      prefixes,
 			kv:            KV{},
-			ssmParameters: ssm.GetParametersOutput{},
+			ssmParameters: ssm.GetParametersByPathOutput{},
 			awsError:      fmt.Errorf("ahh!"),
-			expectedError: fmt.Errorf("error retrieving parameters: %w", fmt.Errorf("ahh!")),
+			expectedError: fmt.Errorf("error retrieving parameters under path %s: %w", prefixes[0], fmt.Errorf("ahh!")),
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			client := mock.MockSSMClient{}
-			client.GetParametersFunc = func(ctx context.Context, params *ssm.GetParametersInput, optFns ...func(*ssm.Options)) (*ssm.GetParametersOutput, error) {
+			client.GetParametersByPathFunc = func(ctx context.Context, params *ssm.GetParametersByPathInput, optFns ...func(*ssm.Options)) (*ssm.GetParametersByPathOutput, error) {
 				return &c.ssmParameters, c.awsError
 			}
 
@@ -126,7 +126,7 @@ func TestUnmarshal(t *testing.T) {
 			targetStruct:  postgresSecrets{},
 			ssmParameter:  ssm.GetParameterOutput{},
 			awsError:      fmt.Errorf("ahh!"),
-			expectedError: fmt.Errorf("error retrieving parameter: %w", fmt.Errorf("ahh!")),
+			expectedError: fmt.Errorf("error retrieving parameter %s: %w", prefix, fmt.Errorf("ahh!")),
 		},
 		{
 			name:          "error unmarshalling parameter",

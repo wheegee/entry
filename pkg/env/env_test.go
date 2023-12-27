@@ -16,10 +16,10 @@ import (
 
 func TestExecute(t *testing.T) {
 	var (
-		prefixes      = []string{"/user-api/postgres", "/admin-api/redis"}
+		prefixes      = []string{"/user-api", "/admin-api"}
 		command       = "printenv"
 		arguments     = []string{}
-		ssmParameters = ssm.GetParametersOutput{
+		ssmParameters = ssm.GetParametersByPathOutput{
 			Parameters: []types.Parameter{
 				{
 					Name:  aws.String("/user-api/postgres"),
@@ -38,7 +38,7 @@ func TestExecute(t *testing.T) {
 		command       string
 		arguments     []string
 		pristine      bool
-		ssmParameters ssm.GetParametersOutput
+		ssmParameters ssm.GetParametersByPathOutput
 		awsError      error
 		expectedError error
 	}{
@@ -68,7 +68,7 @@ func TestExecute(t *testing.T) {
 			command:       command,
 			arguments:     arguments,
 			pristine:      false,
-			ssmParameters: ssm.GetParametersOutput{},
+			ssmParameters: ssm.GetParametersByPathOutput{},
 			awsError:      nil,
 			expectedError: fmt.Errorf("ahh!"),
 		},
@@ -77,7 +77,7 @@ func TestExecute(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			client := mock.MockSSMClient{}
-			client.GetParametersFunc = func(ctx context.Context, params *ssm.GetParametersInput, optFns ...func(*ssm.Options)) (*ssm.GetParametersOutput, error) {
+			client.GetParametersByPathFunc = func(ctx context.Context, params *ssm.GetParametersByPathInput, optFns ...func(*ssm.Options)) (*ssm.GetParametersByPathOutput, error) {
 				return &c.ssmParameters, c.awsError
 			}
 
