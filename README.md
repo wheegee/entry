@@ -1,7 +1,7 @@
 # entry
 
-[![Main](https://github.com/raylas/nextdns-exporter/actions/workflows/main.yaml/badge.svg)](https://github.com/raylas/nextdns-exporter/actions/workflows/main.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/raylas/nextdns-exporter)](https://goreportcard.com/report/github.com/raylas/nextdns-exporter)
+[![Main](https://github.com/linecard/entry/actions/workflows/main.yaml/badge.svg)](https://github.com/linecard/entry/actions/workflows/main.yaml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/linecard/entry)](https://goreportcard.com/report/github.com/linecard/entry)
 
 A package and execution wrapper for AWS SSM Parameter expansion.
 
@@ -10,7 +10,7 @@ A package and execution wrapper for AWS SSM Parameter expansion.
 ### CLI
 
 ```bash
-Usage: main [-g] [-p PREFIX] [COMMAND [ARGUMENTS [ARGUMENTS ...]]]
+Usage: main [-g] [-p PREFIX] [-v] [COMMAND [ARGUMENTS [ARGUMENTS ...]]]
 
 Positional arguments:
   COMMAND                Command to run
@@ -19,6 +19,7 @@ Positional arguments:
 Options:
   -g                     Do not inherit environment
   -p PREFIX              SSM prefixes to source
+  -v                     Verbose output
   --help, -h             display this help and exit
   --version              display version and exit
 ```
@@ -45,13 +46,13 @@ if err != nil {
 
 p := &kv.Parameters{Client: ssm.NewFromConfig(awsConfig)}
 
-// Get
-params, err := p.Get([]string{"/dev/foobar"})
+// Get parameters under provided prefixes
+params, err := p.Get([]string{"/dev"})
 if err != nil {
-  panic("error getting parameter")
+  panic("error getting parameters")
 }
 
-// Unmarshal
+// Unmarshal specific parameter into provided data type
 if err := p.Unmarshal("/dev/foobar", &data); err != nil {
   panic("error unmarshalling parameter")
 }
