@@ -1,7 +1,7 @@
 # entry
 
-[![Main](https://github.com/raylas/nextdns-exporter/actions/workflows/main.yaml/badge.svg)](https://github.com/raylas/nextdns-exporter/actions/workflows/main.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/raylas/nextdns-exporter)](https://goreportcard.com/report/github.com/raylas/nextdns-exporter)
+[![Main](https://github.com/linecard/entry/actions/workflows/main.yaml/badge.svg)](https://github.com/linecard/entry/actions/workflows/main.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/linecard/entry)](https://goreportcard.com/report/github.com/linecard/entry)
 
 A package and execution wrapper for AWS SSM Parameter expansion.
 
