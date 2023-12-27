@@ -1,6 +1,6 @@
 # entry
 
-[![Main](https://github.com/linecard/entry/actions/workflows/main.yaml/badge.svg)](https://github.com/linecard/entry/actions/workflows/main.yml)
+[![Main](https://github.com/linecard/entry/actions/workflows/main.yaml/badge.svg)](https://github.com/linecard/entry/actions/workflows/main.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/linecard/entry)](https://goreportcard.com/report/github.com/linecard/entry)
 
 A package and execution wrapper for AWS SSM Parameter expansion.
