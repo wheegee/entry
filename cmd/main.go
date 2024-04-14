@@ -1,60 +1,57 @@
 package main
 
 import (
-	"flag"
-	"fmt"
+	"context"
 	"log"
 	"os"
-	"os/exec"
-	"project-root/env"
-	"project-root/ssm"
+	"strings"
+
+	"github.com/linecard/entry/extract"
+	"github.com/linecard/entry/load"
+	"github.com/linecard/entry/transform"
+
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 )
 
-func main() {
-	cfg, ssmClient, err := ssm.SetupClient()
+var ctx context.Context
+var ssmClient *ssm.Client
+
+func init() {
+	ctx = context.Background()
+
+	awsConfig, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		log.Fatalf("Unable to setup SSM client, %v", err)
+		log.Fatalf("Unable to load AWS SDK config, %v", err)
 	}
 
-	ssmFlag := flag.NewFlagSet("example", flag.ExitOnError)
-	var ssms []string
-	ssmFlag.Func("ssm", "Specify SSM parameters to fetch", func(s string) error {
-		ssms = append(ssms, s)
-		return nil
-	})
+	ssmClient = ssm.NewFromConfig(awsConfig)
+}
 
-	ssmFlag.Parse(os.Args[1:])
-	args := ssmFlag.Args()
-
-	var additionalArgs []string
-	for i, arg := range args {
-		if arg == "--" {
-			additionalArgs = args[i+1:]
-			args = args[:i]
-			break
-		}
+func main() {
+	preDash, postDash := extract.Argv(os.Args)
+	paths, err := extract.Paths(preDash)
+	if err != nil {
+		log.Fatalf("Failed to parse flags: %v", err)
 	}
 
-	if len(ssms) > 0 {
-		params, err := ssm.FetchParameters(ssmClient, ssms)
-		if err != nil {
-			log.Fatalf("Failed to fetch SSM parameters: %v", err)
-		}
-		for _, value := range params {
-			if err := env.SetEnvVarsFromJSON(value); err != nil {
-				log.Fatalf("Failed to set env vars: %v", err)
-			}
-		}
+	mergedParams, err := extract.SSM(ctx, ssmClient, paths)
+	if err != nil {
+		log.Fatalf("Failed to fetch SSM parameters: %v", err)
 	}
 
-	if len(additionalArgs) > 0 {
-		cmd := exec.Command(additionalArgs[0], additionalArgs[1:]...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error executing command: %s\n", err)
-		}
-	} else {
-		fmt.Println("No command specified to execute.")
+	envSlice, err := transform.ToEnvSlice(mergedParams)
+	if err != nil {
+		log.Fatalf("Failed to transform SSM parameters: %v", err)
 	}
+
+	if len(postDash) > 0 {
+		mergedEnv := append(os.Environ(), envSlice...)
+		if err := load.Exec(mergedEnv, postDash); err != nil {
+			log.Fatalf("Failed: -- %s\n%v", strings.Join(postDash, " "), err)
+		}
+		return
+	}
+
+	load.Stdout(envSlice)
 }
