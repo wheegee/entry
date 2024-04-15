@@ -48,7 +48,7 @@ jobs:
           --tag-only \
           --tags ${GITHUB_REF#refs/*/} \
           --bare \
-          ./cmd
+          ./cmd/entry
 
     - uses: goreleaser/goreleaser-action@v5
       with:
