@@ -1,59 +1,63 @@
 # entry
 
-[![Main](https://github.com/linecard/entry/actions/workflows/main.yaml/badge.svg)](https://github.com/linecard/entry/actions/workflows/main.yaml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/linecard/entry)](https://goreportcard.com/report/github.com/linecard/entry)
+Entry is a binary for use with the `AWS_LAMBDA_EXEC_WRAPPER`. It has a very narrow scope of functionality that does not negotiate.
 
-A package and execution wrapper for AWS SSM Parameter expansion.
+## Requisites
 
-## Usage
+### 1. Data Layer
 
-### CLI
+You store your environment variables in encrypted SSM keys as JSON.
 
-```bash
-Usage: main [-g] [-p PREFIX] [-v] [COMMAND [ARGUMENTS [ARGUMENTS ...]]]
-
-Positional arguments:
-  COMMAND                Command to run
-  ARGUMENTS              Command arguments
-
-Options:
-  -g                     Do not inherit environment
-  -p PREFIX              SSM prefixes to source
-  -v                     Verbose output
-  --help, -h             display this help and exit
-  --version              display version and exit
-```
-
-### Package
+`ssm://path/to/envjson` 
 
 ```json
 {
-  "foo": "oof",
-  "bar": "rab"
+  "ENVAR_0": "value_0",
+  "ENVAR_1": "value_1"
 }
 ```
 
-```go
-var data struct {
-  Foo string `json:"foo"`
-  Bar string `json:"bar"`
-}
+### 2. Runtime Layer
 
-awsConfig, err := config.LoadDefaultConfig(context.TODO())
-if err != nil {
-  panic("error loading AWS credentials")
-}
+Your execution context has AWS credentials available to the default credential chain that are sufficient for accessing the data layer (SSM read && KMS decrypt).
 
-p := &kv.Parameters{Client: ssm.NewFromConfig(awsConfig)}
-
-// Get parameters under provided prefixes
-params, err := p.Get([]string{"/dev"})
-if err != nil {
-  panic("error getting parameters")
-}
-
-// Unmarshal specific parameter into provided data type
-if err := p.Unmarshal("/dev/foobar", &data); err != nil {
-  panic("error unmarshalling parameter")
+```json
+{
+    "Sid": "AllowSSMParameterAccess",
+    "Effect": "Allow",
+    "Action": [
+        "ssm:GetParametersByPath",
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:PutParameter",
+        "kms:Decrypt",
+        "kms:Encrypt"
+    ],
+    "Resource": [
+        "arn:aws:ssm:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:parameter/path/to/envjson",
+        "arn:aws:ssm:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:parameter/path/to/envjson/*"
+    ]
 }
 ```
+
+## Usage
+
+### Core Pattern
+```
+# eval export statements
+eval $(entry --path /path/to/envjson)
+```
+
+```
+# inect environment variables into child process env
+go run cmd/main.go --path /path/to/env/json -- env
+```
+
+```
+# merge mutliple ssm env paths
+go run cmd/main.go --path /path/to/envjson_1 --path /path/to/envjson_2
+```
+
+### AWS Lambda
+1. Build your lambda image with `entry` at `/opt/entry`
+2. Deploy your lambda with the envar: `AWS_LAMBDA_EXEC_WRAPPER=/opt/entry --path /path/to/envjson -- ${@}`
