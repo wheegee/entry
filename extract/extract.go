@@ -34,7 +34,7 @@ func Argv(argv []string) (preDashArgs []string, postDashArgs []string) {
 // Parses the pre-dash arguments and returns a slice of SSM parameter paths.
 func Paths(preDash []string) (ssmPaths []string, err error) {
 	ssmFlag := flag.NewFlagSet("Entry", flag.ExitOnError)
-	ssmFlag.Func("path", "Specify SSM parameter path to fetch", func(s string) error {
+	ssmFlag.Func("p", "Specify SSM parameter path to fetch", func(s string) error {
 		ssmPaths = append(ssmPaths, s)
 		return nil
 	})
