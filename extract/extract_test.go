@@ -34,7 +34,7 @@ func TestArgv(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pre, post := Argv(tt.inputArgs)
+			pre, _, post := Argv(tt.inputArgs)
 
 			if !reflect.DeepEqual(pre, tt.expectedPre) {
 				t.Errorf("Expected pre-dash args %v, got %v", tt.expectedPre, pre)

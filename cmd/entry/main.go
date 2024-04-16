@@ -28,9 +28,15 @@ func init() {
 	ssmClient = ssm.NewFromConfig(awsConfig)
 }
 
+func inLambda() bool {
+	_, exists := os.LookupEnv("AWS_LAMBDA_FUNCTION_NAME")
+	return exists
+}
+
 func main() {
-	preDash, postDash := extract.Argv(os.Args)
-	paths, err := extract.Paths(preDash)
+	preDash, hasDash, postDash := extract.Argv(os.Args)
+
+	paths, verbose, err := extract.ParseFlags(preDash)
 	if err != nil {
 		log.Fatalf("Failed to parse flags: %v", err)
 	}
@@ -45,13 +51,23 @@ func main() {
 		log.Fatalf("Failed to transform SSM parameters: %v", err)
 	}
 
-	if len(postDash) > 0 {
-		mergedEnv := append(os.Environ(), envSlice...)
-		if err := load.Exec(mergedEnv, postDash); err != nil {
-			log.Fatalf("Failed: -- %s\n%v", strings.Join(postDash, " "), err)
+	if hasDash && len(postDash) > 0 {
+		if verbose {
+			load.LogMasked(envSlice)
+		}
+
+		mergedWithParent := append(os.Environ(), envSlice...)
+		if err := load.Exec(mergedWithParent, postDash); err != nil {
+			log.Fatalf("Failed child execution: %s\n%v", strings.Join(postDash, " "), err)
 		}
 		return
 	}
 
-	load.Stdout(envSlice)
+	// don't print export statements to stdout if in lamdba.
+	if !inLambda() {
+		load.Stdout(envSlice)
+		return
+	}
+
+	log.Fatalf("When running in a Lambda, a command must be provided using the '--' separator.")
 }

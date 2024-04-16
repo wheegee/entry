@@ -14,7 +14,7 @@ type SSMClient interface {
 }
 
 // Parses the command line arguments and returns two slices of strings for futher interpretation.
-func Argv(argv []string) (preDashArgs []string, postDashArgs []string) {
+func Argv(argv []string) (preDashArgs []string, hasDash bool, postDashArgs []string) {
 	dashFound := false
 	for _, arg := range argv[1:] {
 		if arg == "--" {
@@ -28,21 +28,25 @@ func Argv(argv []string) (preDashArgs []string, postDashArgs []string) {
 			preDashArgs = append(preDashArgs, arg)
 		}
 	}
-	return preDashArgs, postDashArgs
+	return preDashArgs, dashFound, postDashArgs
 }
 
-// Parses the pre-dash arguments and returns a slice of SSM parameter paths.
-func Paths(preDash []string) (ssmPaths []string, err error) {
-	ssmFlag := flag.NewFlagSet("Entry", flag.ExitOnError)
-	ssmFlag.Func("p", "Specify SSM parameter path to fetch", func(s string) error {
+// Parses the pre-dash arguments and returns a slice of SSM parameter paths and verbosity.
+func ParseFlags(preDash []string) (ssmPaths []string, verbose bool, err error) {
+	flagSet := flag.NewFlagSet("Entry", flag.ExitOnError)
+
+	flagSet.Func("p", "Specify SSM parameter path to fetch", func(s string) error {
 		ssmPaths = append(ssmPaths, s)
 		return nil
 	})
 
-	if err := ssmFlag.Parse(preDash); err != nil {
-		return nil, err
+	flagSet.BoolVar(&verbose, "v", false, "Enable verbose output")
+
+	if err := flagSet.Parse(preDash); err != nil {
+		return nil, false, err
 	}
-	return ssmPaths, nil
+
+	return ssmPaths, verbose, nil
 }
 
 // Fetches SSM parameters and returns a slice of environment variable strings.

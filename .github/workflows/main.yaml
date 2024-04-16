@@ -47,7 +47,8 @@ jobs:
           --platform=linux/arm64,linux/amd64 \
           --tag-only \
           --tags ${GITHUB_REF#refs/*/} \
-          --bare
+          --bare \
+          ./cmd/entry
 
     - uses: goreleaser/goreleaser-action@v5
       with:
