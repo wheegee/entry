@@ -40,18 +40,19 @@ Assuming you are storing your environment at `ssm://path/to/json/env`...
 ### SSM Parameter
 1. The parameter type shall be of secret string.
 2. The parameter value shall be of JSON format.
-3. The parameter JSON value schema shall be of the form...
+3. The parameter JSON schema shall be of the form...
 
 ```json
 {
-    "FOO": "bar",
-    "BAZ": "faz"
+    "ENVAR_1": "value_1",
+    "ENVAR_2": "value_2"
 }
 ```
 
-### Permissions
+### Caller Permissions
 
-This is the gist, need to improve the example.
+1. The caller shall have AWS credentials available to the [credential provider chain](https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html#credentialProviderChain).
+2. The caller shall have permissions akin to the following...
 
 ```json
 {
@@ -62,7 +63,7 @@ This is the gist, need to improve the example.
         "kms:Decrypt"
     ],
     "resource": [
-        "arn:aws:ssm:us-west-2:123456789012:parameter/path/to/env/json"
+        "arn:aws:ssm:${AWS_ACCOUNT_REGION}:${AWS_ACCOUNT_ID}:parameter/path/to/env/json"
     ]
 }
 ```
