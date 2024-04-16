@@ -1,6 +1,6 @@
 # entry
 
-Entry is a convention for defining a container environment variables via SSM.
+Entry is a convention for defining container environment variables via SSM.
 
 ## Usage
 
