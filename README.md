@@ -6,16 +6,15 @@ Entry is a convention for defining container environment variables via SSM.
 
 ### Dockerfile
 ```Dockerfile
-FROM ghcr.io/entry/entry:0.7.2 as entry
-
 FROM golang:1.22.2 as build
 # Build your application
 
 FROM scratch
-COPY --from=entry /ko-entry/entry /opt/entry
+COPY --from=ghcr.io/entry/entry:0.7.2 /ko-entry/entry /opt/entry
 COPY --from=build /dist/app /var/task/app
 
-ENTRYPOINT /opt/entry -p /path/to/json/env -- /var/task/app  
+ENTRYPOINT ["/opt/entry", "-p", "/path/to/json/env", "--"] 
+CMD ["/var/task/app"]
 ```
 
 ### CLI
