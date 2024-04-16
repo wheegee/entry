@@ -14,7 +14,7 @@ type SSMClient interface {
 }
 
 // Parses the command line arguments and returns two slices of strings for futher interpretation.
-func Argv(argv []string) (preDashArgs []string, postDashArgs []string) {
+func Argv(argv []string) (preDashArgs []string, hasDash bool, postDashArgs []string) {
 	dashFound := false
 	for _, arg := range argv[1:] {
 		if arg == "--" {
@@ -28,7 +28,7 @@ func Argv(argv []string) (preDashArgs []string, postDashArgs []string) {
 			preDashArgs = append(preDashArgs, arg)
 		}
 	}
-	return preDashArgs, postDashArgs
+	return preDashArgs, dashFound, postDashArgs
 }
 
 // Parses the pre-dash arguments and returns a slice of SSM parameter paths and verbosity.

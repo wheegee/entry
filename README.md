@@ -1,63 +1,68 @@
 # entry
 
-Entry is a binary for use with the `AWS_LAMBDA_EXEC_WRAPPER`. It has a very narrow scope of functionality that does not negotiate.
-
-## Requisites
-
-### 1. Data Layer
-
-You store your environment variables in encrypted SSM keys as JSON.
-
-`ssm://path/to/envjson` 
-
-```json
-{
-  "ENVAR_0": "value_0",
-  "ENVAR_1": "value_1"
-}
-```
-
-### 2. Runtime Layer
-
-Your execution context has AWS credentials available to the default credential chain that are sufficient for accessing the data layer (SSM read && KMS decrypt).
-
-```json
-{
-    "Sid": "AllowSSMParameterAccess",
-    "Effect": "Allow",
-    "Action": [
-        "ssm:GetParametersByPath",
-        "ssm:GetParameter",
-        "ssm:GetParameters",
-        "ssm:PutParameter",
-        "kms:Decrypt",
-        "kms:Encrypt"
-    ],
-    "Resource": [
-        "arn:aws:ssm:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:parameter/path/to/envjson",
-        "arn:aws:ssm:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:parameter/path/to/envjson/*"
-    ]
-}
-```
+Entry is a convention for defining a containers environment variables via SSM.
 
 ## Usage
 
-### Core Pattern
-```
-# eval export statements
-eval $(entry --path /path/to/envjson)
+### Dockerfile
+```Dockerfile
+FROM ghcr.io/entry/entry:0.7.2 as entry
+
+FROM golang:1.22.2 as build
+# Build your application
+
+FROM scratch
+COPY --from=entry /ko-entry/entry /opt/entry
+COPY --from=build /dist/app /var/task/app
+
+ENTRYPOINT /opt/entry -p /path/to/json/env -- /var/task/app  
 ```
 
-```
-# inect environment variables into child process env
-go run cmd/main.go --path /path/to/env/json -- env
+### CLI
+```shell
+# 1. Print env export statements to stdout.
+./entry -p /path/to/json/env
+
+# 2. Export env to current shell.
+eval $(./entry -p /path/to/json/env)
+
+# 3. Execute child process with the env.
+./entry -p /path/to/json/env -- env
+
+# 4. Merge multiple envs.
+./entry -p /path/to/json/env1 -p /path/to/json/env2 -- env
 ```
 
-```
-# merge mutliple ssm env paths
-go run cmd/main.go --path /path/to/envjson_1 --path /path/to/envjson_2
+## Requisites
+
+Assuming you are storing your environment at `ssm://path/to/json/env`...
+
+### SSM Parameter
+1. The parameter type shall be of secret string.
+2. The parameter value shall be of JSON format.
+3. The parameter JSON value schema shall be of the form...
+
+```json
+{
+    "FOO": "bar",
+    "BAZ": "faz"
+}
 ```
 
-### AWS Lambda
-1. Build your lambda image with `entry` at `/opt/entry`
-2. Deploy your lambda with the envar: `AWS_LAMBDA_EXEC_WRAPPER=/opt/entry --path /path/to/envjson -- ${@}`
+### Permissions
+
+This is the gist, need to improve the example.
+
+```json
+{
+    "sid": "ssmAccess",
+    "effect": "Allow",
+    "action": [
+        "ssm:GetParameter",
+        "kms:Decrypt"
+    ],
+    "resource": [
+        "arn:aws:ssm:us-west-2:123456789012:parameter/path/to/env/json"
+    ]
+}
+```
