@@ -46,7 +46,7 @@ func TestToEnvSlice(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			envSlice, err := ToEnvSlice(tt.inputParams)
+			envSlice, err := ToEnvSlice(tt.inputParams, false)
 			if tt.expectErr {
 				require.Error(t, err, "Test %s should have returned an error", tt.name)
 			} else {

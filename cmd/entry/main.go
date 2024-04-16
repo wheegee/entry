@@ -30,7 +30,8 @@ func init() {
 
 func main() {
 	preDash, postDash := extract.Argv(os.Args)
-	paths, err := extract.Paths(preDash)
+
+	paths, verbose, err := extract.ParseFlags(preDash)
 	if err != nil {
 		log.Fatalf("Failed to parse flags: %v", err)
 	}
@@ -40,7 +41,7 @@ func main() {
 		log.Fatalf("Failed to fetch SSM parameters: %v", err)
 	}
 
-	envSlice, err := transform.ToEnvSlice(mergedParams)
+	envSlice, err := transform.ToEnvSlice(mergedParams, verbose)
 	if err != nil {
 		log.Fatalf("Failed to transform SSM parameters: %v", err)
 	}
@@ -48,7 +49,7 @@ func main() {
 	if len(postDash) > 0 {
 		mergedEnv := append(os.Environ(), envSlice...)
 		if err := load.Exec(mergedEnv, postDash); err != nil {
-			log.Fatalf("Failed: -- %s\n%v", strings.Join(postDash, " "), err)
+			log.Fatalf("Failed execution: %s\n%v", strings.Join(postDash, " "), err)
 		}
 		return
 	}
