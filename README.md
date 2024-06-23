@@ -1,40 +1,26 @@
 # entry
 
-Entry is a convention for defining container environment variables via SSM.
+Entry provides a simple solution for managing application configuration during any phase of the development lifecycle.
 
 ## Usage
 
-### Dockerfile
-```Dockerfile
-FROM golang:1.22.2 as build
-# Build your application
-
-FROM scratch
-COPY --from=ghcr.io/entry/entry:0.7.2 /ko-entry/entry /opt/entry
-COPY --from=build /dist/app /var/task/app
-
-ENTRYPOINT ["/opt/entry", "-p", "/path/to/json/env", "--"] 
-CMD ["/var/task/app"]
-```
-
 ### CLI
 ```shell
-# 1. Print env export statements to stdout.
-./entry -p /path/to/json/env
-
-# 2. Export env to current shell.
-eval $(./entry -p /path/to/json/env)
-
-# 3. Execute child process with the env.
-./entry -p /path/to/json/env -- env
-
-# 4. Merge multiple envs.
-./entry -p /path/to/json/env1 -p /path/to/json/env2 -- env
+./entry -p /path/to/env -- env
 ```
 
-## Requisites
+### Dockerfile
+```Dockerfile
+FROM scratch
+COPY --from=ghcr.io/entry/entry:latest /ko-app/entry /opt/entry
 
-Assuming you are storing your environment at `ssm://path/to/json/env`...
+ENTRYPOINT ["/opt/entry", "-p", "/path/to/env", "--"] 
+CMD ["env"]
+```
+
+## Storing Environment
+
+Entry assumes the usage of AWS SSM as the backing data store for your environments.
 
 ### SSM Parameter
 1. The parameter type shall be of secret string.
@@ -44,7 +30,9 @@ Assuming you are storing your environment at `ssm://path/to/json/env`...
 ```json
 {
     "ENVAR_1": "value_1",
-    "ENVAR_2": "value_2"
+    "ENVAR_2": "value_2",
+    ...
+    "ENVAR_N": "value_N"
 }
 ```
 
@@ -62,7 +50,7 @@ Assuming you are storing your environment at `ssm://path/to/json/env`...
         "kms:Decrypt"
     ],
     "resource": [
-        "arn:aws:ssm:${AWS_ACCOUNT_REGION}:${AWS_ACCOUNT_ID}:parameter/path/to/env/json"
+        "arn:aws:ssm:${AWS_ACCOUNT_REGION}:${AWS_ACCOUNT_ID}:parameter/*"
     ]
 }
 ```
