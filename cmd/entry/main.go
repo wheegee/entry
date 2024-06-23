@@ -33,9 +33,13 @@ func init() {
 func main() {
 	preDash, hasDash, postDash := extract.Argv(os.Args)
 
-	paths, err := extract.ParseFlags(preDash)
+	paths, verbose, err := extract.ParseFlags(preDash)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to parse flags")
+	}
+
+	if verbose {
+		log.Warn().Msg("--verbose flag has been deprecated, use `LOG_LEVEL=info` instead")
 	}
 
 	mergedParams, err := extract.SSM(ctx, ssmClient, paths)

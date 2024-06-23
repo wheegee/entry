@@ -32,7 +32,7 @@ func Argv(argv []string) (preDashArgs []string, hasDash bool, postDashArgs []str
 }
 
 // Parses the pre-dash arguments and returns a slice of SSM parameter paths.
-func ParseFlags(preDash []string) (ssmPaths []string, err error) {
+func ParseFlags(preDash []string) (ssmPaths []string, verbose bool, err error) {
 	flagSet := flag.NewFlagSet("Entry", flag.ExitOnError)
 
 	flagSet.Func("p", "ssm path (ex: /path/to/env)", func(s string) error {
@@ -40,11 +40,13 @@ func ParseFlags(preDash []string) (ssmPaths []string, err error) {
 		return nil
 	})
 
+	flagSet.BoolVar(&verbose, "v", false, "verbose output")
+
 	if err := flagSet.Parse(preDash); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	return ssmPaths, nil
+	return ssmPaths, verbose, nil
 }
 
 // Fetches SSM parameters and returns a slice of environment variable strings.
