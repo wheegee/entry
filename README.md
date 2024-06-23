@@ -12,7 +12,7 @@ Entry provides a simple solution for managing application configuration during a
 ### Dockerfile
 ```Dockerfile
 FROM scratch
-COPY --from=ghcr.io/entry/entry:latest /ko-app/entry /opt/entry
+COPY --from=ghcr.io/linecard/entry:latest /ko-app/entry /opt/entry
 
 ENTRYPOINT ["/opt/entry", "-p", "/path/to/env", "--"] 
 CMD ["env"]
