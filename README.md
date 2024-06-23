@@ -23,16 +23,14 @@ CMD ["env"]
 Entry assumes the usage of AWS SSM as the backing data store for your environments.
 
 ### SSM Parameter
-1. The parameter type shall be of secret string.
+1. The parameter type shall be of type Secret String.
 2. The parameter value shall be of JSON format.
 3. The parameter JSON schema shall be of the form...
 
 ```json
 {
     "ENVAR_1": "value_1",
-    "ENVAR_2": "value_2",
-    ...
-    "ENVAR_N": "value_N"
+    "ENVAR_2": "value_2"
 }
 ```
 
