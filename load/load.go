@@ -2,10 +2,8 @@ package load
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
-	"strings"
 )
 
 // Exec executes a command with the provided environment variables.
@@ -21,14 +19,5 @@ func Exec(envSlice []string, args []string) error {
 func Stdout(envSlice []string) {
 	for _, kv := range envSlice {
 		fmt.Printf("export %s\n", kv)
-	}
-}
-
-func LogMasked(envSlice []string) {
-	for _, kv := range envSlice {
-		parts := strings.SplitN(kv, "=", 2)
-		unmaskedKey := parts[0]
-		maksedValue := strings.Repeat("*", len(parts[1]))
-		log.Printf("export %s=%s\n", unmaskedKey, maksedValue)
 	}
 }

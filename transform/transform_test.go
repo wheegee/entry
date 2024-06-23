@@ -20,6 +20,7 @@ func TestToEnvSlice(t *testing.T) {
 			name: "single valid parameter",
 			inputParams: []types.Parameter{
 				{
+					Name:  aws.String("/path/to/env"),
 					Value: aws.String(`{"DB_HOST": "localhost", "DB_PORT": "5432"}`),
 				},
 			},
@@ -30,6 +31,7 @@ func TestToEnvSlice(t *testing.T) {
 			name: "invalid JSON format",
 			inputParams: []types.Parameter{
 				{
+					Name:  aws.String("/path/to/env"),
 					Value: aws.String(`{"DB_HOST": "localhost", "DB_PORT": "5432"`), // Missing closing brace
 				},
 			},

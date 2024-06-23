@@ -31,16 +31,16 @@ func Argv(argv []string) (preDashArgs []string, hasDash bool, postDashArgs []str
 	return preDashArgs, dashFound, postDashArgs
 }
 
-// Parses the pre-dash arguments and returns a slice of SSM parameter paths and verbosity.
+// Parses the pre-dash arguments and returns a slice of SSM parameter paths.
 func ParseFlags(preDash []string) (ssmPaths []string, verbose bool, err error) {
 	flagSet := flag.NewFlagSet("Entry", flag.ExitOnError)
 
-	flagSet.Func("p", "Specify SSM parameter path to fetch", func(s string) error {
+	flagSet.Func("p", "ssm path (ex: /path/to/env)", func(s string) error {
 		ssmPaths = append(ssmPaths, s)
 		return nil
 	})
 
-	flagSet.BoolVar(&verbose, "v", false, "Enable verbose output")
+	flagSet.BoolVar(&verbose, "v", false, "verbose output")
 
 	if err := flagSet.Parse(preDash); err != nil {
 		return nil, false, err
